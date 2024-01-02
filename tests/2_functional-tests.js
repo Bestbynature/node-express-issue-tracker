@@ -170,7 +170,7 @@ suite('Functional Tests', function () {
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'error');
-        assert.equal(res.body.error, 'no update field(s) sent');
+        assert.equal(res.body.error, 'required field(s) missing');
         done();
       });
   });

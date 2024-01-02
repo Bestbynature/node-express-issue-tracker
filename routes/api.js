@@ -42,25 +42,27 @@ module.exports = function (app) {
     })
     .put(function (req, res) {
       let project = req.params.project;
-      let { _id } = req.body;
-
+      let { _id, ...updateFields } = req.body;
+    
       if (!_id) {
         return res.json({ error: 'missing _id' });
       }
-
+    
       let issueToUpdate = issues.find(issue => issue._id === parseInt(_id));
-
+    
       if (!issueToUpdate) {
         return res.json({ error: 'could not update', _id });
       }
-
+    
+      if (Object.keys(updateFields).length === 0) {
+        return res.json({ error: 'required field(s) missing', _id });
+      }
+    
       // Update fields if provided in request body
-      Object.keys(req.body)
-        .filter(key => key !== '_id')
-        .forEach(key => {
-          issueToUpdate[key] = req.body[key];
-        });
-
+      Object.keys(updateFields).forEach(key => {
+        issueToUpdate[key] = updateFields[key];
+      });
+    
       issueToUpdate.updated_on = new Date();
       res.json({ result: 'successfully updated', _id });
     })
