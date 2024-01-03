@@ -127,7 +127,7 @@ suite('Functional Tests', function () {
     chai
       .request(server)
       .put('/api/issues/test_project')
-      .send({ _id: 1, issue_title: 'Updated Title' })
+      .send({ _id: '65948ccf80de05275a48ef89', issue_title: 'Updated Title' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
@@ -140,7 +140,7 @@ suite('Functional Tests', function () {
     chai
       .request(server)
       .put('/api/issues/test_project')
-      .send({ _id: 1, issue_title: 'Updated Title', issue_text: 'Updated Text' })
+      .send({ _id: '65948ccf80de05275a48ef89', issue_title: 'Updated Title', issue_text: 'Updated Text' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
@@ -166,11 +166,12 @@ suite('Functional Tests', function () {
     chai
       .request(server)
       .put('/api/issues/test_project')
-      .send({ _id: 1 })
+      .send({
+      })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'error');
-        assert.equal(res.body.error, 'required field(s) missing');
+        assert.equal(res.body.error, 'no update field(s) sent');
         done();
       });
   });
@@ -192,7 +193,7 @@ suite('Functional Tests', function () {
     chai
       .request(server)
       .delete('/api/issues/test_project')
-      .send({ _id: 1 })
+      .send({ _id: '65948ccf80de05275a48ef89' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
