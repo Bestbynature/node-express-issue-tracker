@@ -7,7 +7,7 @@ const mongodb = require("mongodb");
 const uri = process.env.MONGO_URI;
 
 module.exports = function (app) {
-  mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+  mongoose.connect(uri);
 
   const issueSchema = new Schema({
     issue_title: { type: String, required: true },
@@ -18,34 +18,44 @@ module.exports = function (app) {
     open: { type: Boolean, required: true },
     created_on: { type: Date, required: true },
     updated_on: { type: Date, required: true },
-    project: String,
   });
 
   const Issue = mongoose.model("Issue", issueSchema);
 
+  module.exports = { Issue }
+
   app
     .route("/api/issues/:project")
-    .get(function (req, res) {
-      let project = req.params.project;
-      let { _id, ...searchFields } = req.query;
-      let query = { projectId: project };
-
-      if (_id) {
-        query._id = _id;
-      }
-
-      Object.keys(searchFields).forEach((key) => {
-        query[key] = searchFields[key];
-      });
-
-      IssueModel.find(query, (err, issues) => {
-        if (err) {
-          console.log(err);
-          return res.json({ error: "could not get", projectName });
+    .get(async function (req, res) {
+      try {
+        let project = req.params.project;
+        let { _id, ...searchFields } = req.query;
+        let query = { projectId: project };
+    
+        if (_id) {
+          query._id = _id;
         }
-        return res.json(issues);
-      });
-    })
+    
+        // Check if there are no search fields provided; fetch all issues for the project
+        if (Object.keys(searchFields).length === 0) {
+          const issues = await Issue.find(query).exec();
+          return res.status(200).json(issues);
+        }
+    
+        // Iterating through URL query parameters to create the search query
+        for (let field in searchFields) {
+          if (Object.prototype.hasOwnProperty.call(searchFields, field)) {
+            query[field] = searchFields[field];
+          }
+        }
+    
+        const filteredIssues = await Issue.find(query).exec();
+        return res.status(200).json(filteredIssues);
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "unexpected error occurred" });
+      }
+    })        
     .post(function (req, res) {
       let project = req.params.project;
       let { issue_title, issue_text, created_by, assigned_to, status_text } =
@@ -65,7 +75,7 @@ module.exports = function (app) {
           open: true,
           created_on: new Date().toUTCString(),
           updated_on: new Date().toUTCString(),
-          project,
+          _id: new mongodb.ObjectId().toString(),
         });
         newIssue.save();
         return res.json(newIssue);
@@ -77,63 +87,71 @@ module.exports = function (app) {
         });
       }
     })
-    .put(function (req, res) {
-      let project = req.params.project;
+    .put(async function (req, res) {
+      try {
+        let project = req.params.project;
+        let { _id, ...updateFields } = req.body;
     
-      let updateObject = {};
+        if (!_id && Object.keys(updateFields).length !== 0) {
+          return res.status(400).json({ error: "missing _id" });
+        }
     
-      if(!req.body._id) {
-        return res.json({ error: "missing _id" });
-      }
-    
-      // Filter out _id field, then check if any fields remain for update
-      Object.keys(req.body)
-        .filter(key => key !== '_id')
-        .forEach((key) => {
-          if (req.body[key]) {
-            updateObject[key] = req.body[key];
-          }
-        });
-    
-      if (Object.keys(updateObject).length === 0) {
-        return res.json({
-          error: "no update field(s) sent",
-          _id: req.body._id,
-        });
-      }
-    
-      updateObject.updated_on = new Date().toUTCString();
-    
-      Issue.findByIdAndUpdate(
-        req.body._id, 
-        updateObject, 
-        { new: true },
-        (err, updatedIssue) => {
-          if (err || !updatedIssue) {
-            return res.json({ error: "could not update", _id: req.body._id });
-          }
-          return res.json({
-            result: "successfully updated",
-            _id: req.body._id,
+        if (Object.keys(updateFields).length === 0) {
+          return res.status(400).json({
+            error: "no update field(s) sent",
+            _id,
           });
         }
-      );
-    })    
-    .delete(function (req, res) {
-      let project = req.params.project;
-      let { _id } = req.body;
-
-      if (!_id) {
-        return res.json({ error: "missing _id" });
+    
+        updateFields.updated_on = new Date().toUTCString();
+    
+        const existingIssue = await Issue.findById(_id).exec();
+    
+        if (!existingIssue) {
+          return res.status(404).json({ error: "issue not found", _id });
+        }
+    
+        const option = { new: true };
+        const updatedIssue = await Issue.findOneAndUpdate({ _id }, { $set: updateFields }, option).exec();
+    
+        if (!updatedIssue) {
+          return res.status(404).json({ error: "could not update", _id });
+        }
+    
+        return res.status(200).json({
+          result: "successfully updated",
+          _id,
+        });
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'could not update' });
       }
-
-      let issueIndex = issues.findIndex((issue) => issue._id === parseInt(_id));
-
-      if (issueIndex === -1) {
-        return res.json({ error: "could not delete", _id });
+    })           
+    .delete(async function (req, res) {
+      try {
+        let project = req.params.project;
+        let { _id } = req.body;
+    
+        if (!_id) {
+          return res.status(400).json({ error: "missing _id" });
+        }
+    
+        if (!mongoose.Types.ObjectId.isValid(_id)) {
+          return res.status(400).json({ error: "could not delete", _id });
+        }
+    
+        const deletedIssue = await Issue.findOneAndDelete({ _id });
+    
+        if (!deletedIssue) {
+          return res.status(404).json({ error: "could not find issue", _id });
+        }
+    
+        return res.status(200).json({ result: "successfully deleted", _id });
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "could not delete", _id });
       }
-
-      issues.splice(issueIndex, 1);
-      res.json({ result: "successfully deleted", _id });
     });
+    
+
 };
