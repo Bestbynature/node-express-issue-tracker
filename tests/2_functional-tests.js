@@ -2,27 +2,19 @@ const chaiHttp = require('chai-http');
 const chai = require('chai');
 const assert = chai.assert;
 const server = require('../server');
-
+const {Issue} = require('../routes/api')
 chai.use(chaiHttp);
 
-/**
- Create an issue with every field: POST request to /api/issues/{project}
-Create an issue with only required fields: POST request to /api/issues/{project}
-Create an issue with missing required fields: POST request to /api/issues/{project}
-View issues on a project: GET request to /api/issues/{project}
-View issues on a project with one filter: GET request to /api/issues/{project}
-View issues on a project with multiple filters: GET request to /api/issues/{project}
-Update one field on an issue: PUT request to /api/issues/{project}
-Update multiple fields on an issue: PUT request to /api/issues/{project}
-Update an issue with missing _id: PUT request to /api/issues/{project}
-Update an issue with no fields to update: PUT request to /api/issues/{project}
-Update an issue with an invalid _id: PUT request to /api/issues/{project}
-Delete an issue: DELETE request to /api/issues/{project}
-Delete an issue with an invalid _id: DELETE request to /api/issues/{project}
-Delete an issue with missing _id: DELETE request to /api/issues/{project}
- */
-
 suite('Functional Tests', function () {
+
+  let testId; 
+
+  before(async function () {
+    const issue = await Issue.findOne({}, '_id').exec();
+    testId = issue._id;
+  });
+
+
   test('Create an issue with every field', function (done) {
     chai
       .request(server)
@@ -127,7 +119,7 @@ suite('Functional Tests', function () {
     chai
       .request(server)
       .put('/api/issues/test_project')
-      .send({ _id: '65948ccf80de05275a48ef89', issue_title: 'Updated Title' })
+      .send({ _id: testId, issue_title: 'Updated Title' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
@@ -140,7 +132,7 @@ suite('Functional Tests', function () {
     chai
       .request(server)
       .put('/api/issues/test_project')
-      .send({ _id: '65948ccf80de05275a48ef89', issue_title: 'Updated Title', issue_text: 'Updated Text' })
+      .send({ _id: testId, issue_title: 'Updated Title multiple', issue_text: 'Updated Text multiple' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
@@ -155,7 +147,7 @@ suite('Functional Tests', function () {
       .put('/api/issues/test_project')
       .send({ issue_title: 'Updated Title', issue_text: 'Updated Text' })
       .end(function (err, res) {
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 400);
         assert.property(res.body, 'error');
         assert.equal(res.body.error, 'missing _id');
         done();
@@ -169,7 +161,7 @@ suite('Functional Tests', function () {
       .send({
       })
       .end(function (err, res) {
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 400);
         assert.property(res.body, 'error');
         assert.equal(res.body.error, 'no update field(s) sent');
         done();
@@ -182,7 +174,7 @@ suite('Functional Tests', function () {
       .put('/api/issues/test_project')
       .send({ _id: 'invalid', issue_title: 'Updated Title' })
       .end(function (err, res) {
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 500);
         assert.property(res.body, 'error');
         assert.equal(res.body.error, 'could not update');
         done();
@@ -193,7 +185,7 @@ suite('Functional Tests', function () {
     chai
       .request(server)
       .delete('/api/issues/test_project')
-      .send({ _id: '65948ccf80de05275a48ef89' })
+      .send({ _id: testId })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
@@ -208,7 +200,7 @@ suite('Functional Tests', function () {
       .delete('/api/issues/test_project')
       .send({ _id: 'invalid' })
       .end(function (err, res) {
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 400);
         assert.property(res.body, 'error');
         assert.equal(res.body.error, 'could not delete');
         done();
@@ -220,7 +212,7 @@ suite('Functional Tests', function () {
       .request(server)
       .delete('/api/issues/test_project')
       .end(function (err, res) {
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 400);
         assert.property(res.body, 'error');
         assert.equal(res.body.error, 'missing _id');
         done();
