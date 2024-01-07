@@ -85,11 +85,19 @@ suite('Functional Tests', function () {
       .request(server)
       .get('/api/issues/test_project')
       .end(function (err, res) {
-        assert.equal(res.status, 200);
-        assert.isArray(res.body);
-        done();
+        try {
+          assert.equal(res.status, 200, `Expected status 200, but got ${res.status}`);
+          assert.isArray(res.body, 'Response body should be an array');
+          assert.isAtLeast(res.body.length, 1, 'Expected at least one issue in the response');
+          console.log(res.body[0]);
+          done();
+        } catch (error) {
+          done(error); 
+        }
       });
   });
+
+  
 
   test('View issues on a project with one filter', function (done) {
     chai

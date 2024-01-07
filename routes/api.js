@@ -10,6 +10,7 @@ module.exports = function (app) {
   mongoose.connect(uri);
 
   const issueSchema = new Schema({
+    project: { type: String, required: true },
     issue_title: { type: String, required: true },
     issue_text: { type: String, required: true },
     created_by: { type: String, required: true },
@@ -30,7 +31,7 @@ module.exports = function (app) {
       try {
         let project = req.params.project;
         let { _id, ...searchFields } = req.query;
-        let query = { projectId: project };
+        let query = { project: project };
     
         if (_id) {
           query._id = _id;
@@ -48,8 +49,11 @@ module.exports = function (app) {
             query[field] = searchFields[field];
           }
         }
+
+        console.log('Query:', query)
     
         const filteredIssues = await Issue.find(query).exec();
+        console.log('Filtered Issues:', filteredIssues)
         return res.status(200).json(filteredIssues);
       } catch (error) {
         console.error(error);
@@ -67,6 +71,7 @@ module.exports = function (app) {
 
       try {
         let newIssue = new Issue({
+          project,
           issue_title,
           issue_text,
           created_by,
@@ -105,7 +110,7 @@ module.exports = function (app) {
     
         updateFields.updated_on = new Date().toUTCString();
     
-        const existingIssue = await Issue.findById(_id).exec();
+        const existingIssue = await Issue.findById(_id, project).exec();
     
         if (!existingIssue) {
           return res.status(404).json({ error: "issue not found", _id });
