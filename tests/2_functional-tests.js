@@ -8,9 +8,10 @@ chai.use(chaiHttp);
 suite('Functional Tests', function () {
 
   let testId; 
+  const project = 'test_project';
 
   before(async function () {
-    const issue = await Issue.findOne({}, '_id').exec();
+    const issue = await Issue.findOne({project}, '_id').exec();
     testId = issue._id;
   });
 
@@ -18,7 +19,7 @@ suite('Functional Tests', function () {
   test('Create an issue with every field', function (done) {
     chai
       .request(server)
-      .post('/api/issues/test_project')
+      .post(`/api/issues/${project}`)
       .send({
         issue_title: 'Test Title',
         issue_text: 'Test Text',
@@ -44,7 +45,7 @@ suite('Functional Tests', function () {
   test('Create an issue with only required fields', function (done) {
     chai
       .request(server)
-      .post('/api/issues/test_project')
+      .post(`/api/issues/${project}`)
       .send({
         issue_title: 'Test Title',
         issue_text: 'Test Text',
@@ -68,7 +69,7 @@ suite('Functional Tests', function () {
   test('Create an issue with missing required fields', function (done) {
     chai
       .request(server)
-      .post('/api/issues/test_project')
+      .post(`/api/issues/${project}`)
       .send({
         issue_title: 'Test Title',
       })
@@ -83,13 +84,13 @@ suite('Functional Tests', function () {
   test('View issues on a project', function (done) {
     chai
       .request(server)
-      .get('/api/issues/test_project')
+      .get(`/api/issues/${project}`)
       .end(function (err, res) {
         try {
           assert.equal(res.status, 200, `Expected status 200, but got ${res.status}`);
           assert.isArray(res.body, 'Response body should be an array');
           assert.isAtLeast(res.body.length, 1, 'Expected at least one issue in the response');
-          console.log(res.body[0]);
+          // console.log(res.body[0]);
           done();
         } catch (error) {
           done(error); 
@@ -102,7 +103,7 @@ suite('Functional Tests', function () {
   test('View issues on a project with one filter', function (done) {
     chai
       .request(server)
-      .get('/api/issues/test_project')
+      .get(`/api/issues/${project}`)
       .query({ issue_title: 'Test Title' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
@@ -114,7 +115,7 @@ suite('Functional Tests', function () {
   test('View issues on a project with multiple filters', function (done) {
     chai
       .request(server)
-      .get('/api/issues/test_project')
+      .get(`/api/issues/${project}`)
       .query({ issue_title: 'Test Title', issue_text: 'Test Text' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
@@ -126,12 +127,14 @@ suite('Functional Tests', function () {
   test('Update one field on an issue', function (done) {
     chai
       .request(server)
-      .put('/api/issues/test_project')
+      .put(`/api/issues/${project}`)
       .send({ _id: testId, issue_title: 'Updated Title' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
+        // console.log(res.body);
         assert.equal(res.body.result, 'successfully updated');
+        assert.equal(res.body._id,  testId )
         done();
       });
   });
@@ -139,7 +142,7 @@ suite('Functional Tests', function () {
   test('Update multiple fields on an issue', function (done) {
     chai
       .request(server)
-      .put('/api/issues/test_project')
+      .put(`/api/issues/${project}`)
       .send({ _id: testId, issue_title: 'Updated Title multiple', issue_text: 'Updated Text multiple' })
       .end(function (err, res) {
         assert.equal(res.status, 200);
@@ -152,7 +155,7 @@ suite('Functional Tests', function () {
   test('Update an issue with missing _id', function (done) {
     chai
       .request(server)
-      .put('/api/issues/test_project')
+      .put(`/api/issues/${project}`)
       .send({ issue_title: 'Updated Title', issue_text: 'Updated Text' })
       .end(function (err, res) {
         assert.equal(res.status, 400);
@@ -165,7 +168,7 @@ suite('Functional Tests', function () {
   test('Update an issue with no fields to update', function (done) {
     chai
       .request(server)
-      .put('/api/issues/test_project')
+      .put(`/api/issues/${project}`)
       .send({
       })
       .end(function (err, res) {
@@ -179,7 +182,7 @@ suite('Functional Tests', function () {
   test('Update an issue with an invalid _id', function (done) {
     chai
       .request(server)
-      .put('/api/issues/test_project')
+      .put(`/api/issues/${project}`)
       .send({ _id: 'invalid', issue_title: 'Updated Title' })
       .end(function (err, res) {
         assert.equal(res.status, 500);
@@ -192,7 +195,7 @@ suite('Functional Tests', function () {
   test('Delete an issue', function (done) {
     chai
       .request(server)
-      .delete('/api/issues/test_project')
+      .delete(`/api/issues/${project}`)
       .send({ _id: testId })
       .end(function (err, res) {
         assert.equal(res.status, 200);
@@ -205,7 +208,7 @@ suite('Functional Tests', function () {
   test('Delete an issue with an invalid _id', function (done) {
     chai
       .request(server)
-      .delete('/api/issues/test_project')
+      .delete(`/api/issues/${project}`)
       .send({ _id: 'invalid' })
       .end(function (err, res) {
         assert.equal(res.status, 400);
@@ -218,7 +221,7 @@ suite('Functional Tests', function () {
   test('Delete an issue with missing _id', function (done) {
     chai
       .request(server)
-      .delete('/api/issues/test_project')
+      .delete(`/api/issues/${project}`)
       .end(function (err, res) {
         assert.equal(res.status, 400);
         assert.property(res.body, 'error');
