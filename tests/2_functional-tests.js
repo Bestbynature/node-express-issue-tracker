@@ -8,7 +8,7 @@ chai.use(chaiHttp);
 suite('Functional Tests', function () {
 
   let testId; 
-  const project = 'apitest';
+  const project = 'test_project';
 
   before(async function () {
     const issue = await Issue.findOne({project}, '_id').exec();
@@ -132,7 +132,6 @@ suite('Functional Tests', function () {
       .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.property(res.body, 'result');
-        // console.log(res.body);
         assert.equal(res.body.result, 'successfully updated');
         assert.equal(res.body._id,  testId )
         done();

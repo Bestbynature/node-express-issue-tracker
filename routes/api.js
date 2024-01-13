@@ -19,8 +19,6 @@ module.exports = function (app) {
     open: { type: Boolean, required: true },
     created_on: { type: Date, required: true },
     updated_on: { type: Date, required: true },
-  }, {
-    versionKey: false
   });
 
   const Issue = mongoose.model("Issue", issueSchema);
@@ -82,7 +80,6 @@ module.exports = function (app) {
           open: true,
           created_on: new Date().toUTCString(),
           updated_on: new Date().toUTCString(),
-          _id: new mongodb.ObjectId().toString(),
         });
         newIssue.save();
         return res.json(newIssue);
@@ -95,57 +92,93 @@ module.exports = function (app) {
       }
     })
     .put(async function (req, res) {
-      try {
-        let project = req.params.project;
-        let { _id, ...updateFields } = req.body;
-    
-        if (!_id && Object.keys(updateFields).length !== 0) {
-          return res.status(400).json({ error: "missing _id" });
+      const project = req.params.project;
+      const updateFields = {};
+
+      Object.keys(req.body).forEach((key) => {
+        if (req.body[key]) {
+          updateFields[key] = req.body[key];
         }
-    
-        if (Object.keys(updateFields).length === 0) {
-          return res.status(400).json({
-            error: "no update field(s) sent",
-            _id,
-          });
-        }
-    
-        updateFields.updated_on = new Date().toUTCString();
-    
-        // Include the project in the query to find the existing issue
-        const existingIssue = await Issue.findOne({ _id, project }).exec();
-  
-        if(existingIssue) console.log(existingIssue.updated_on)
-        
-        if (!existingIssue) {
-          return res.status(404).json({ error: "issue not found", _id });
-        }
-    
-        const option = { new: true };
-        
-        setTimeout(async() => {
-          
-          const updatedIssue = await Issue.findOneAndUpdate({ _id, project }, { $set: updateFields }, option).exec();
-      
-          if (!updatedIssue) {
-            return res.status(404).json({ error: "could not update", _id });
-          }
-          
+      })
 
-          console.log(updatedIssue.updated_on)
-
-
-          return res.status(200).json({
-            result: "successfully updated",
-            '_id': updatedIssue._id.toString(),
-          });
-
-        }, 1000)
-    
-      } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'could not update' });
+      if (!updateFields._id) {
+        return res.status(400).json({ error: "missing _id" });
       }
+
+      if (Object.keys(updateFields).length === 1) {
+        return res.status(400).json({
+          error: "no update field(s) sent",
+          _id: updateFields._id,
+        });
+      }
+
+      updateFields.updated_on = new Date().toUTCString();
+
+      const option = { new: true };
+
+      const updatedIssue = await Issue.findOneAndUpdate({ _id, project }, updateFields, option);
+
+      if (!updatedIssue) {
+        return res.status(404).json({ error: "could not update", _id });
+      }
+
+      return res.status(200).json({
+        result: "successfully updated",
+        '_id': updatedIssue._id.toString(),
+      });
+
+
+      // try {
+      //   let project = req.params.project;
+      //   let { _id, ...updateFields } = req.body;
+    
+      //   if (!_id && Object.keys(updateFields).length !== 0) {
+      //     return res.status(400).json({ error: "missing _id" });
+      //   }
+    
+      //   if (Object.keys(updateFields).length === 0) {
+      //     return res.status(400).json({
+      //       error: "no update field(s) sent",
+      //       _id,
+      //     });
+      //   }
+    
+      //   updateFields.updated_on = new Date().toUTCString();
+    
+      //   // Include the project in the query to find the existing issue
+      //   const existingIssue = await Issue.findOne({ _id, project }).exec();
+  
+      //   if(existingIssue) console.log(existingIssue.updated_on)
+        
+      //   if (!existingIssue) {
+      //     return res.status(404).json({ error: "issue not found", _id });
+      //   }
+    
+      //   const option = { new: true };
+        
+      //   setTimeout(async() => {
+          
+      //     const updatedIssue = await Issue.findOneAndUpdate({ _id, project }, { $set: updateFields }, option).exec();
+      
+      //     if (!updatedIssue) {
+      //       return res.status(404).json({ error: "could not update", _id });
+      //     }
+          
+
+      //     console.log(updatedIssue.updated_on)
+
+
+      //     return res.status(200).json({
+      //       result: "successfully updated",
+      //       '_id': updatedIssue._id.toString(),
+      //     });
+
+      //   }, 1000)
+    
+      // } catch (error) {
+      //   console.error(error);
+      //   return res.status(500).json({ error: 'could not update' });
+      // }
     })
     .delete(async function (req, res) {
       try {
