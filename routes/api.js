@@ -19,6 +19,8 @@ module.exports = function (app) {
     open: { type: Boolean, required: true },
     created_on: { type: Date, required: true },
     updated_on: { type: Date, required: true },
+  }, {
+    versionKey: false
   });
 
   const Issue = mongoose.model("Issue", issueSchema);
@@ -121,21 +123,25 @@ module.exports = function (app) {
     
         const option = { new: true };
         
-        // Include the project in the update operation
-        const updatedIssue = await Issue.findOneAndUpdate({ _id, project }, { $set: updateFields }, option).exec();
-    
-        if (!updatedIssue) {
-          return res.status(404).json({ error: "could not update", _id });
-        }
-        
-        setTimeout(() => {
+        setTimeout(async() => {
+          
+          const updatedIssue = await Issue.findOneAndUpdate({ _id, project }, { $set: updateFields }, option).exec();
+      
+          if (!updatedIssue) {
+            return res.status(404).json({ error: "could not update", _id });
+          }
+          
+
           console.log(updatedIssue.updated_on)
+
+
+          return res.status(200).json({
+            result: "successfully updated",
+            '_id': updatedIssue._id.toString(),
+          });
+
         }, 1000)
     
-        return res.status(200).json({
-          result: "successfully updated",
-          '_id': updatedIssue._id.toString(),
-        });
       } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'could not update' });
@@ -154,11 +160,10 @@ module.exports = function (app) {
           return res.status(400).json({ error: "could not delete", _id });
         }
     
-        // Include the project in the query to find the issue to delete
         const deletedIssue = await Issue.findOneAndDelete({ _id, project }).exec();
     
         if (!deletedIssue) {
-          return res.status(404).json({ error: "could not find issue", _id });
+          return res.status(404).json({ error: "could not delete", _id });
         }
     
         return res.status(200).json({ result: "successfully deleted", _id });

@@ -8,7 +8,7 @@ chai.use(chaiHttp);
 suite('Functional Tests', function () {
 
   let testId; 
-  const project = 'test_project';
+  const project = 'apitest';
 
   before(async function () {
     const issue = await Issue.findOne({project}, '_id').exec();
