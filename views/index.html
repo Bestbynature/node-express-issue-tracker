@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Issue Tracker</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://code.jquery.com 'unsafe-inline'">
     <link
       rel="icon"
       type="image/png"
@@ -20,7 +21,7 @@
       <h3>Example <code>GET</code> usage</h3>
       <code>/api/issues/{project}</code><br />
       <code>/api/issues/{project}?open=true&amp;assigned_to=Joe</code><br />
-      <h3>Example return</h3>
+      <h3>Example return statment</h3>
       <pre>
 <code>[
   { 
@@ -49,7 +50,7 @@
       Go to
       <a href="/api/issues/apitest/"><code>/api/issues/apitest/</code></a>
       project
-      <h2 style="text-align: left">API Tests</h2>
+      <h2 style="text-align: left">API Test</h2>
 
 <!-- create an issue -->
       <h3>Submit issue on <i>apitest</i></h3>
@@ -59,7 +60,6 @@
           name="issue_title"
           placeholder="*Title"
           style="width: 100px"
-          required=""
         /><br />
         <textarea
           type="text"
@@ -104,7 +104,6 @@
           name="_id"
           placeholder="*_id"
           style="width: 100px"
-          required=""
         /><br />
         <input
           type="text"
@@ -141,7 +140,7 @@
           ><input type="checkbox" name="open" value="false" /> Check to close
           issue</label
         ><br />
-        <button type="submit">Submit Issue</button>
+        <button type="submit">Update Issue</button>
       </form>
       <br />
 
