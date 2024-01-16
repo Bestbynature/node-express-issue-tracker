@@ -131,7 +131,7 @@ suite("Functional Tests", function () {
       .put(`/api/issues/${project}`)
       .send({ _id: "invalid", issue_title: "Updated Title" })
       .end(function (err, res) {
-        assert.equal(res.status, 500);
+        assert.equal(res.status, 200);
         assert.property(res.body, "error");
         assert.equal(res.body.error, "could not update");
         done();
@@ -144,7 +144,7 @@ suite("Functional Tests", function () {
       .put(`/api/issues/${project}`)
       .send({ issue_title: "Updated Title", issue_text: "Updated Text" })
       .end(function (err, res) {
-        assert.equal(res.status, 400);
+        assert.equal(res.status, 200);
         assert.property(res.body, "error");
         assert.equal(res.body.error, "missing _id");
         done();
@@ -159,7 +159,7 @@ suite("Functional Tests", function () {
         _id: id1,
       })
       .end(function (err, res) {
-        assert.equal(res.status, 400);
+        assert.equal(res.status, 200);
         assert.property(res.body, "error");
         assert.equal(res.body.error, "no update field(s) sent");
         done();
@@ -212,7 +212,7 @@ suite("Functional Tests", function () {
       .delete(`/api/issues/${project}`)
       .send({ _id: 'invalid' })
       .end(function (err, res) {
-        assert.equal(res.status, 400);
+        assert.equal(res.status, 200);
         assert.property(res.body, 'error');
         assert.equal(res.body.error, 'could not delete');
         done();
@@ -224,7 +224,7 @@ suite("Functional Tests", function () {
       .request(server)
       .delete(`/api/issues/${project}`)
       .end(function (err, res) {
-        assert.equal(res.status, 400);
+        assert.equal(res.status, 200);
         assert.property(res.body, 'error');
         assert.equal(res.body.error, 'missing _id');
         done();
